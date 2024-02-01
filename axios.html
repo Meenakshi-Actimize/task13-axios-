@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axios</title>
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+    <link rel="stylesheet" href="./assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+</head>
+<body>
+
+    <div class="container mob-table">
+        <div class="headers">
+            <h2 class="table-title">Books entry</h2>
+            <button class="btn add">Add books</button>
+        </div>
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Bookname</th>
+                    <th>Bookauthor</th>
+                    <th>Publisher</th>
+                    <th>Rating</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody class="text-center">
+            </tbody>
+
+        </table>
+    </div>
+
+    <div class="form-wrapper">
+        <div class="mobileForm">
+
+            <div class="group">
+                <label for="books">Bookname</label>
+                <input type="text" class="form-control mx-3" id="bname">
+            </div>
+            <div class="group">
+                <label for="author">Bookauthor</label>
+                <input type="text" class="form-control mx-3" id="bauthor">
+            </div>
+            <div class="group">
+                <label for="publish">Publisher&nbsp;</label>
+                <input type="text" class="form-control mx-3" id="bpublish">
+            </div>
+            <div class="group">
+                <label for="rate">Rating</label>&nbsp;&nbsp;
+                <input type="number" class="form-control mx-3" id="brate">
+            </div>
+
+            <div class="action">
+                <button class="btn btn-primary save">ADD</button>
+                <button class="btn btn-danger cancel">Cancel</button>
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+
+<script src="./assets/json/db.json"></script>
+
+<script>
+let tbody = document.querySelector('tbody');
+let addBtn = document.querySelector('.add');
+let form = document.querySelector('.form-wrapper');
+let saveBtn = document.querySelector('.save');
+let cancelBtn =  document.querySelector('.cancel');
+let bookEle =  document.querySelector('#bname');
+let authorEle =  document.querySelector('#bauthor');
+let publishEle =  document.querySelector('#bpublish');
+let rateEle =  document.querySelector('#brate');
+
+let httpm =null;
+
+let url ='http://localhost:3000/books/';
+let baseurl ='http://localhost:3000/books/';
+
+let books =[];
+
+let id=null;
+
+let data ={};
+
+addBtn.onclick = function(){
+    httpm="POST";
+    clearForm();
+    form.classList.add('active')
+      saveBtn.innerHTML = "ADD";
+
+}
+
+
+cancelBtn.onclick = function(){
+    form.classList.remove('active')
+}
+
+saveBtn.onclick = function() {
+    data.Bookname = bookEle.value;
+    data.Bookauthor = authorEle.value;
+    data.Publisher = publishEle.value;
+    data.Rating = rateEle.value;
+
+    if (httpm === "PUT") {
+        data.id = id;
+        axios.put(url + data.id, data)
+            .then(response => {
+                url = baseurl;
+                clearForm();
+                form.classList.remove('active');
+                getbooks();
+            })
+            .catch(error => {
+                console.error('Error updating book:', error);
+            });
+    } else {
+        axios.post(url, data)
+            .then(response => {
+                url = baseurl;
+                clearForm();
+                form.classList.remove('active');
+                getbooks();
+            })
+            .catch(error => {
+                console.error('Error adding book:', error);
+            });
+    }
+};
+
+
+function clearForm(){
+    bookEle.value =null;
+    authorEle.value =null;
+    publishEle.value= null;
+    rateEle.value =null;
+}
+
+
+
+function getbooks(){
+    
+    axios.get(url)
+    .then(response=>{
+        books = response.data;
+        updateTable();
+    })
+    .catch(error => {
+            console.error('error:', error);
+        });
+
+    
+}
+
+getbooks();
+
+function updateTable(){
+    let data="";
+
+    if(books.length>0){
+        for(i= 0;i<books.length;i++){
+
+            data+=  `<tr id="${books[i]['id']}">
+                        <td>${books[i]['Bookname']}</td>
+                        <td>${books[i]['Bookauthor']}</td>
+                        <td>${books[i]['Publisher']}</td>
+                        <td>${books[i]['Rating']}</td>
+                        <td><button class="btn btn-primary" onclick="editbooks(event)">Edit</button></td>
+                        <td><button class="btn btn-danger" onclick="deletebooks(event)">Delete</button></td>   
+                     </tr>`
+        }
+
+     tbody.innerHTML=data;
+     
+    }
+    else{
+        tbody.innerHTML= "No records found...";
+
+    }
+
+}
+
+function editbooks(e){
+   form.classList.add('active');
+   httpm="PUT";
+   id= e.target.parentElement.parentElement.id;
+   
+
+  let selectedbooks = books.filter((m)=>{return m['id'] ==id})[0];
+  bookEle.value= selectedbooks.Bookname;
+  authorEle.value = selectedbooks.Bookauthor;
+  publishEle.value = selectedbooks.Publisher;
+  rateEle.value = selectedbooks.Rating;
+  saveBtn.innerHTML = "Update";
+
+
+   
+
+}
+
+function deletebooks(e) {
+    id = e.target.parentElement.parentElement.id;
+    axios.delete(url + id)
+        .then(response => {
+            getbooks();
+        })
+        .catch(error => {
+            console.error('Error deleting book:', error);
+        });
+}
+</script>
+
+</body>
+</html>
